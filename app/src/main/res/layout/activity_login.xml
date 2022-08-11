@@ -6,28 +6,46 @@
     android:layout_height="match_parent"
     tools:context=".login">
 
-    <TextView
-        android:id="@+id/textView"
+    <ImageView
+        android:id="@+id/background"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:contentDescription="TODO"
+        android:scaleX="1.2"
+        android:scaleY="1.2"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.49"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/adView"
+        app:layout_constraintVertical_bias="0.0"
+        app:srcCompat="@mipmap/backgrounds" />
+
+    <TextView
+        android:id="@+id/textWelcome"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
         android:layout_marginTop="100dp"
+        android:layout_marginEnd="10dp"
         android:fontFamily="sans-serif-medium"
         android:text="Welcome, to the next gen social network!"
         android:textAppearance="@style/TextAppearance.AppCompat.Display1"
-        android:textSize="20sp"
+        android:textColor="#9932CC"
+        android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/button"
+        android:id="@+id/logInButtonGoogle"
         style="@style/Widget.Material3.Button.TextButton.Icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="50dp"
         android:text="SignIn"
         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-        android:textColor="#000000"
+        android:textColor="#9932CC"
         android:textSize="34sp"
         android:typeface="sans"
         app:icon="@drawable/common_google_signin_btn_icon_dark_normal"
@@ -36,7 +54,7 @@
         app:iconTintMode="add"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView"
+        app:layout_constraintTop_toBottomOf="@+id/textWelcome"
         app:rippleColor="#000000" />
 
     <com.google.android.gms.ads.AdView
@@ -46,4 +64,39 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/edtTextEmail"
+        style="@style/Widget.AppCompat.AutoCompleteTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:ems="10"
+        android:fontFamily="cursive"
+        android:hint="E-mail"
+        android:inputType="textEmailAddress"
+        android:text=""
+        android:textAlignment="viewStart"
+        android:textColor="#9932CC"
+        android:textColorHint="#9932CC"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/logInButtonGoogle" />
+
+    <EditText
+        android:id="@+id/edtTextPassword"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:ems="10"
+        android:fontFamily="cursive"
+        android:hint="Password"
+        android:inputType="textPassword"
+        android:text=""
+        android:textAlignment="viewStart"
+        android:textColor="#9932CC"
+        android:textColorHint="#9932CC"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/edtTextEmail" />
 </androidx.constraintlayout.widget.ConstraintLayout>
