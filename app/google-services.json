@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:268888505819:android:dba6d2f88338863b0bfbfe",
         "android_client_info": {
-          "package_name": "com.example.social-network"
+          "package_name": "com.example.social_network"
         }
       },
       "oauth_client": [
@@ -17,7 +17,7 @@
           "client_id": "268888505819-o1s2lann2gnrsiq4c7aakc6qkoq6q8h3.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.social-network",
+            "package_name": "com.example.social_network",
             "certificate_hash": "3985b4a451d696126488dca675729014a459a99a"
           }
         },
