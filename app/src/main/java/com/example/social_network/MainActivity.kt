@@ -3,32 +3,46 @@ package com.example.social_network
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Resources
+import android.graphics.*
+import android.media.Image
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
+import android.view.View
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.google.ar.core.ArCoreApk
 import com.google.ar.core.AugmentedFace
 import com.google.ar.core.Frame
+import com.google.ar.core.TrackingState
 import com.google.ar.sceneform.FrameTime
 import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.rendering.Renderable
 import com.google.ar.sceneform.rendering.Texture
 import com.google.ar.sceneform.ux.AugmentedFaceNode
-import java.util.*
+import java.io.*
 import java.util.function.Consumer
 
-class MainActivity : AppCompatActivity() {
 
-    private var hasCamera: Boolean = false
+class MainActivity : AppCompatActivity() {
+    // Google ARCore
     private var modelRenderable: ModelRenderable? = null
     private var texture: Texture? = null
     private var isAdded: Boolean = false
-    private var usingAr: Boolean? = null
+    private var usingAr: Boolean? = false
+    private val faceNodeMap = HashMap<AugmentedFace, AugmentedFaceNode>()
+    private var currentFrame: Frame? = null
 
-    var asset = Array(2){R.raw.fox_face; R.drawable.fox_face_mesh_texture}
+    //Camera
+    private var hasCamera: Boolean = false
+    private var mWidth = Resources.getSystem().getDisplayMetrics().widthPixels
+    private var mHeight = Resources.getSystem().getDisplayMetrics().heightPixels
+    private var capturePicture = false
+
+    var asset = Array(2) { R.raw.fox_face; R.drawable.fox_face_mesh_texture }
 
     private companion object {
         const val TAG = "MainActivity"
@@ -44,15 +58,33 @@ class MainActivity : AppCompatActivity() {
         setTheme(R.style.Theme_Socialnetwork)
         setContentView(R.layout.activity_main)
         hasCamera = hasCameraHardware(this)
-        if (hasCamera){
+        if (hasCamera) {
             checkAr()
-            if(usingAr!!){manageArFragment()}
+            getPermissions()
+            if (usingAr!!) {
+                manageArFragment()
+            } else {
+                manageCamera()
+            }
         } else {
             Toast.makeText(this, "No camera detected", Toast.LENGTH_LONG).show()
             val intent: Intent = Intent(applicationContext, login::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
         }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun getPermissions() {
+        requestPermissions(arrayOf(
+            android.Manifest.permission.CAMERA,
+            android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            android.Manifest.permission.READ_EXTERNAL_STORAGE
+        ), 1)
+    }
+
+    private fun manageCamera() {
+
     }
 
     private fun checkAr() {
@@ -65,45 +97,142 @@ class MainActivity : AppCompatActivity() {
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    fun loadLens(context: Context, asset: Int, texture: Int){
-        ModelRenderable.builder()
-            .setSource(this, asset)
-            .build()
-            .thenAccept(Consumer { renderable: ModelRenderable ->
-                this.modelRenderable = renderable
-            })
-        Texture.builder()
-            .setSource(this, texture)
-            .build()
-            .thenAccept(Consumer { texture: Texture ->
-                this.texture = texture
-            })
+    fun loadLens(context: Context, asset: Int?, texture: Int?) {
+        // Load the model.
+        if (asset == null || texture == null) {
+            this.modelRenderable = null
+            this.texture = null
+        } else {
+            ModelRenderable.builder()
+                .setSource(this, asset)
+                .build()
+                .thenAccept(Consumer { renderable: ModelRenderable ->
+                    this.modelRenderable = renderable
+                    this.modelRenderable?.isShadowCaster = true
+                    this.modelRenderable?.isShadowReceiver = true
+                })
+                .exceptionally { throwable: Throwable ->
+                    Toast.makeText(context, "Unable to load renderable", Toast.LENGTH_LONG).show()
+                    null
+                }
+            // Load the texture.
+            Texture.builder()
+                .setSource(this, texture)
+                .build()
+                .thenAccept(Consumer { texture: Texture ->
+                    this.texture = texture
+                })
+                .exceptionally { throwable: Throwable ->
+                    Toast.makeText(context, "Unable to load texture", Toast.LENGTH_LONG).show()
+                    null
+                }
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
     private fun manageArFragment() {
-        var customArFragment: CustomArFragment = supportFragmentManager.findFragmentById(R.id.arFragment) as CustomArFragment
-        loadLens(this, R.raw.canonical_face_mesh, R.drawable.canonical_face_texture)
+        val customArFragment: CustomArFragment =
+            supportFragmentManager.findFragmentById(R.id.arFragment) as CustomArFragment
+        loadLens(this, null, null)
         customArFragment.arSceneView.cameraStreamRenderPriority = Renderable.RENDER_PRIORITY_FIRST
         updateListener(customArFragment)
     }
 
-    private fun updateListener(customArFragment: CustomArFragment){
+    private fun updateListener(customArFragment: CustomArFragment) {
         customArFragment.arSceneView.scene.addOnUpdateListener { frameTime: FrameTime ->
-            if(modelRenderable == null || texture == null) {return@addOnUpdateListener}
             val frame: Frame? = customArFragment.arSceneView.arFrame
+            this.currentFrame = frame
+            if (capturePicture) {capturePicture = false;savePicture()}
+            if (modelRenderable == null || texture == null) {
+                return@addOnUpdateListener
+            }
             val augmentedFaces = frame?.getUpdatedTrackables(AugmentedFace::class.java)
-            if (augmentedFaces != null) { for (augmentedFace: AugmentedFace in augmentedFaces) { if (!isAdded) {
-                renderAr(customArFragment, augmentedFace)
-                isAdded = true
-            } } }
+            if (augmentedFaces != null) {
+                for (augmentedFace: AugmentedFace in augmentedFaces) {
+                    if (!isAdded) {
+                        renderAr(customArFragment, augmentedFace)
+                    }
+                }
+            }
         }
     }
 
-    private fun renderAr(customArFragment: CustomArFragment, augmentedFace: AugmentedFace){
-        val augmentedFaceNode = AugmentedFaceNode(augmentedFace)
-        augmentedFaceNode.setParent(customArFragment.arSceneView.scene)
-        augmentedFaceNode.faceRegionsRenderable = modelRenderable
-        augmentedFaceNode.faceMeshTexture = texture
+    private fun renderAr(customArFragment: CustomArFragment, augmentedFace: AugmentedFace) {
+        val augmentedFaceMode = AugmentedFaceNode(augmentedFace)
+        augmentedFaceMode.setParent(customArFragment.arSceneView.scene)
+        augmentedFaceMode.faceRegionsRenderable = modelRenderable
+        augmentedFaceMode.faceMeshTexture = texture
+        faceNodeMap.put(augmentedFace, augmentedFaceMode)
+        isAdded = true
+        val iterator: MutableIterator<Map.Entry<AugmentedFace, AugmentedFaceNode>> =
+            faceNodeMap.entries.iterator()
+        val (face, node) = iterator.next()
+        while (face.trackingState == TrackingState.STOPPED) {
+            node.setParent(null)
+            iterator.remove()
+        }
+    }
+
+    fun takePictureAr(view: View) {
+        capturePicture = true;
+    }
+
+    @Throws(IOException::class)
+    fun savePicture() {
+
+        mWidth = Resources.getSystem().displayMetrics.widthPixels
+        mHeight = Resources.getSystem().displayMetrics.heightPixels
+
+        // Create a file in the Pictures/HelloAR album.
+        val out = File(
+            Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_PICTURES
+            ).toString() + "/HelloAR", "Img" +
+                    java.lang.Long.toHexString(System.currentTimeMillis()) + ".png"
+        )
+        // Make sure the directory exists
+        if (!out.parentFile?.exists()!!) {out.parentFile?.mkdirs()}
+
+        val image:Image? = currentFrame?.acquireCameraImage()
+        val imageFormat: Int = image!!.format
+        if (imageFormat == ImageFormat.YUV_420_888) {
+            // Create a bitmap.
+            val bmp_res: ByteArray? = NV21toJPEG(YUV_420_888toNV21(image), image.width, image.height)
+            val bmp:Bitmap? = BitmapFactory.decodeByteArray(bmp_res, 0, bmp_res!!.size, null)
+            var mat:Matrix = Matrix()
+            mat.postRotate(-90f)
+            val rotatedBmp: Bitmap = Bitmap.createBitmap(bmp!!, 0, 0, bmp.width, bmp.height, mat, true)
+            // Write it to disk.
+            val fos = FileOutputStream(out)
+            rotatedBmp.compress(Bitmap.CompressFormat.PNG, 100, fos)
+            fos.flush()
+            fos.close()
+            Toast.makeText(this, "Image saved", Toast.LENGTH_LONG).show()
+        }
+
+    }
+
+    private fun NV21toJPEG(nv21: ByteArray, width: Int, height: Int): ByteArray? {
+        val out = ByteArrayOutputStream()
+        val yuv = YuvImage(nv21, ImageFormat.NV21, width, height, null)
+        yuv.compressToJpeg(Rect(0, 0, width, height), 100, out)
+        return out.toByteArray()
+    }
+
+    private fun YUV_420_888toNV21(image: Image): ByteArray {
+        val nv21: ByteArray
+        val yBuffer = image.planes[0].buffer
+        val uBuffer = image.planes[1].buffer
+        val vBuffer = image.planes[2].buffer
+        val ySize = yBuffer.remaining()
+        val uSize = uBuffer.remaining()
+        val vSize = vBuffer.remaining()
+        nv21 = ByteArray(ySize + uSize + vSize)
+
+        //U and V are swapped
+        yBuffer[nv21, 0, ySize]
+        vBuffer[nv21, ySize, vSize]
+        uBuffer[nv21, ySize + vSize, uSize]
+        return nv21
     }
 }
