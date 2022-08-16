@@ -10,7 +10,9 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
+import android.util.Log
 import android.view.View
+import android.widget.Button
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -18,7 +20,9 @@ import com.google.ar.core.ArCoreApk
 import com.google.ar.core.AugmentedFace
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingState
+import com.google.ar.sceneform.AnchorNode
 import com.google.ar.sceneform.FrameTime
+import com.google.ar.sceneform.Sun
 import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.rendering.Renderable
 import com.google.ar.sceneform.rendering.Texture
@@ -33,14 +37,20 @@ class MainActivity : AppCompatActivity() {
     private var texture: Texture? = null
     private var isAdded: Boolean = false
     private var usingAr: Boolean? = false
-    private val faceNodeMap = HashMap<AugmentedFace, AugmentedFaceNode>()
+    private var faceNodeMap = HashMap<AugmentedFace, AugmentedFaceNode>()
     private var currentFrame: Frame? = null
+    private var arInUse: Boolean = false
+    private var delMask: Boolean = false
 
     //Camera
     private var hasCamera: Boolean = false
     private var mWidth = Resources.getSystem().getDisplayMetrics().widthPixels
     private var mHeight = Resources.getSystem().getDisplayMetrics().heightPixels
     private var capturePicture = false
+
+    //Buttons
+    private var arBtnLeft: Button? = null
+    private var arBtnRight: Button? = null
 
     var asset = Array(2) { R.raw.fox_face; R.drawable.fox_face_mesh_texture }
 
@@ -57,15 +67,13 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setTheme(R.style.Theme_Socialnetwork)
         setContentView(R.layout.activity_main)
+        arBtnLeft = this.findViewById(R.id.btnLeftAr)
+        arBtnRight = this.findViewById(R.id.btnRightAr)
         hasCamera = hasCameraHardware(this)
         if (hasCamera) {
             checkAr()
             getPermissions()
-            if (usingAr!!) {
-                manageArFragment()
-            } else {
-                manageCamera()
-            }
+            if (usingAr!!) { manageArFragment() } else { manageCamera() }
         } else {
             Toast.makeText(this, "No camera detected", Toast.LENGTH_LONG).show()
             val intent: Intent = Intent(applicationContext, login::class.java)
@@ -108,8 +116,8 @@ class MainActivity : AppCompatActivity() {
                 .build()
                 .thenAccept(Consumer { renderable: ModelRenderable ->
                     this.modelRenderable = renderable
-                    this.modelRenderable?.isShadowCaster = true
-                    this.modelRenderable?.isShadowReceiver = true
+                    //this.modelRenderable?.isShadowCaster = true
+                    //this.modelRenderable?.isShadowReceiver = true
                 })
                 .exceptionally { throwable: Throwable ->
                     Toast.makeText(context, "Unable to load renderable", Toast.LENGTH_LONG).show()
@@ -142,19 +150,27 @@ class MainActivity : AppCompatActivity() {
         customArFragment.arSceneView.scene.addOnUpdateListener { frameTime: FrameTime ->
             val frame: Frame? = customArFragment.arSceneView.arFrame
             this.currentFrame = frame
-            if (capturePicture) {capturePicture = false;savePicture()}
-            if (modelRenderable == null || texture == null) {
-                return@addOnUpdateListener
-            }
             val augmentedFaces = frame?.getUpdatedTrackables(AugmentedFace::class.java)
             if (augmentedFaces != null) {
                 for (augmentedFace: AugmentedFace in augmentedFaces) {
-                    if (!isAdded) {
-                        renderAr(customArFragment, augmentedFace)
+                    if (!isAdded) {if (modelRenderable != null || texture != null) {renderAr(customArFragment, augmentedFace)}}
+                    else{
+                        if (delMask){
+                            clearAr(customArFragment, augmentedFace)
+                            delMask = false
+                        }
                     }
                 }
             }
+            if (capturePicture) {capturePicture = false;savePicture()}
         }
+    }
+
+    private fun clearAr(customArFragment: CustomArFragment, augmentedFace: AugmentedFace) {
+        try {
+            customArFragment.arSceneView.scene.removeChild(faceNodeMap[augmentedFace])
+            isAdded = false
+        } catch (e: Exception) {}
     }
 
     private fun renderAr(customArFragment: CustomArFragment, augmentedFace: AugmentedFace) {
@@ -187,7 +203,7 @@ class MainActivity : AppCompatActivity() {
         val out = File(
             Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_PICTURES
-            ).toString() + "/HelloAR", "Img" +
+            ).toString() + "/SoChat", "Img" +
                     java.lang.Long.toHexString(System.currentTimeMillis()) + ".png"
         )
         // Make sure the directory exists
@@ -235,4 +251,22 @@ class MainActivity : AppCompatActivity() {
         uBuffer[nv21, ySize + vSize, uSize]
         return nv21
     }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    fun toggleFaceAr(view: View) {
+        if (arInUse){
+            arInUse = false
+            loadLens(this, null, null)
+            delMask = true
+            arBtnLeft!!.visibility = View.GONE
+            arBtnRight!!.visibility = View.GONE
+        } else {
+            arInUse = true
+            loadLens(this, R.raw.fox_face, R.drawable.fox_face_mesh_texture)
+            arBtnLeft!!.visibility = View.VISIBLE
+            arBtnRight!!.visibility = View.VISIBLE
+        }
+    }
+    fun switchLeftAr(view: View) {}
+    fun switchRightAr(view: View) {}
 }
