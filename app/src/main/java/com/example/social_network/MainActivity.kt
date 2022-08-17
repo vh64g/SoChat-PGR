@@ -39,6 +39,10 @@ class MainActivity : AppCompatActivity() {
     // Google ARCore
     private var modelRenderable: ModelRenderable? = null
     private var texture: Texture? = null
+
+    private var last_model: ModelRenderable? = null
+    private var last_texture: Texture? = null
+
     private var isAdded: Boolean = false
     private var usingAr: Boolean? = false
     private var faceNodeMap = HashMap<AugmentedFace, AugmentedFaceNode>()
@@ -58,20 +62,25 @@ class MainActivity : AppCompatActivity() {
     private var arBtnRight: Button? = null
 
     // Ar Assets
+    //Models:
     private val baseLink: String = "https://firebasestorage.googleapis.com/v0/b/social-media-android-app-2022.appspot.com/o/Lenses%2Fmodels%2F"
+    private val fox_face: String = "fox_face.glb?alt=media&token=6106a707-8d86-4657-9461-b0990341a222"
     private val ringofgood: String = "ringofgood.glb?alt=media&token=9790aea2-3b6f-41eb-8259-aac837b17fa3"
+    private var ringofgood01: String = "ringofgood01.glb?alt=media&token=5b7b25ac-b95c-4db0-a2de-6b9ded1fedb8"
+    private var planetaryring: String = "planetaryring.glb?alt=media&token=462a5fa2-66ab-45f3-8a8e-fd6b5c75fed1"
     private val void: String = "goldenface01.glb?alt=media&token=0829dc75-68ee-42be-a978-dc6d2ea89e12"
     private val monkey: String = "monkey01.glb?alt=media&token=e655bb5f-6f96-43b4-b4e4-ca3ee17b1a93"
     private val hearts01: String = "hearts01facelens.glb?alt=media&token=96254791-e71f-4b27-95f0-4c4dbf39b000"
+    //asset system:
     private var currentArAsset: Int = 0
     private var assets = arrayOf<Any>(
-        arrayOf<Any>("Test", "$baseLink$ringofgood", R.drawable.fox_face_mesh_texture),
-        arrayOf<Any>("Test", "$baseLink$ringofgood", R.drawable.face_mask_test_gimp),
-        arrayOf<Any>("Test", "$baseLink$ringofgood", R.drawable.lavalens01),
+        arrayOf<Any>("Test", "$baseLink$fox_face", R.drawable.fox_face_mesh_texture),
+        arrayOf<Any>("Test", "$baseLink$ringofgood01", R.drawable.face_mask_test_gimp),
+        arrayOf<Any>("Test", "$baseLink$ringofgood01", R.drawable.lavalens01),
         arrayOf<Any>("Test", "$baseLink$hearts01", R.drawable.face_mask_test_gimp02),
         arrayOf<Any>("Test", "$baseLink$hearts01", R.drawable.germany_lens01),
-        arrayOf<Any>("Test", "$baseLink$ringofgood", R.drawable.crown_texture),
-        arrayOf<Any>("Test", "$baseLink$hearts01", R.drawable.nova01),
+        arrayOf<Any>("Test", "$baseLink$ringofgood01", R.drawable.crown_texture),
+        arrayOf<Any>("Test", "$baseLink$ringofgood01", R.drawable.nova01),
         arrayOf<Any>("Test", "$baseLink$void", R.drawable.nova02)
     )
 
@@ -181,14 +190,9 @@ class MainActivity : AppCompatActivity() {
             val augmentedFaces = frame?.getUpdatedTrackables(AugmentedFace::class.java)
             if (augmentedFaces != null) {
                 for (augmentedFace: AugmentedFace in augmentedFaces) {
-                    if (!isAdded) {
-                        if (modelRenderable != null || texture != null) {
-                            if (!loadingNewLens) {
-                                renderAr(customArFragment, augmentedFace)
-                            }
-                        }
-                    }
+                    if (!isAdded) { if (modelRenderable != null || texture != null) { if (!loadingNewLens) { renderAr(customArFragment, augmentedFace) } } }
                     else{
+                        if (texture != last_texture && modelRenderable != last_model){ delMask = true }
                         if (delMask){
                             clearAr(customArFragment, augmentedFace)
                             delMask = false
@@ -214,6 +218,9 @@ class MainActivity : AppCompatActivity() {
 
         faceNodeMap.put(augmentedFace, augmentedFaceMode)
         isAdded = true
+
+        last_model = modelRenderable
+        last_texture = texture
 
         val iterator: MutableIterator<Map.Entry<AugmentedFace, AugmentedFaceNode>> =
             faceNodeMap.entries.iterator()
@@ -291,14 +298,15 @@ class MainActivity : AppCompatActivity() {
     fun toggleFaceAr(view: View) {
         if (arInUse){
             arInUse = false
+            loadingNewLens = true
             loadLens(this, null, null)
-            delMask = true
             arBtnLeft!!.visibility = View.GONE
             arBtnRight!!.visibility = View.GONE
         } else {
             arInUse = true
             val arAsset = Array.get(assets[currentArAsset], 1) as String?
             val arTexture = Array.get(assets[currentArAsset], 2) as Int?
+            loadingNewLens = true
             loadLens(this, arAsset, arTexture)
             if (currentArAsset > 0){arBtnLeft!!.visibility = View.VISIBLE}
             if (currentArAsset < assets.size - 1){arBtnRight!!.visibility = View.VISIBLE}
@@ -317,8 +325,8 @@ class MainActivity : AppCompatActivity() {
         }else{arBtnRight!!.visibility = View.VISIBLE}
         val arAsset = Array.get(assets[currentArAsset], 1) as String?
         val arTexture = Array.get(assets[currentArAsset], 2) as Int?
+        loadingNewLens = true
         loadLens(this, arAsset, arTexture)
-        delMask = true
     }
     @RequiresApi(Build.VERSION_CODES.N)
     fun switchRightAr(view: View) {
@@ -333,7 +341,7 @@ class MainActivity : AppCompatActivity() {
         }else{arBtnRight!!.visibility = View.VISIBLE}
         val arAsset = Array.get(assets[currentArAsset], 1) as String?
         val arTexture = Array.get(assets[currentArAsset], 2) as Int?
+        loadingNewLens = true
         loadLens(this, arAsset, arTexture)
-        delMask = true
     }
 }
