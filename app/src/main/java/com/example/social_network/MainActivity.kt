@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.graphics.*
 import android.media.Image
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -16,18 +17,21 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContentProviderCompat.requireContext
 import com.google.ar.core.ArCoreApk
+import com.google.ar.sceneform.Sun
+import com.google.ar.sceneform.AnchorNode
 import com.google.ar.core.AugmentedFace
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingState
-import com.google.ar.sceneform.AnchorNode
 import com.google.ar.sceneform.FrameTime
-import com.google.ar.sceneform.Sun
+import com.google.ar.sceneform.assets.RenderableSource
 import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.rendering.Renderable
 import com.google.ar.sceneform.rendering.Texture
 import com.google.ar.sceneform.ux.AugmentedFaceNode
 import java.io.*
+import java.lang.reflect.Array
 import java.util.function.Consumer
 
 
@@ -41,6 +45,7 @@ class MainActivity : AppCompatActivity() {
     private var currentFrame: Frame? = null
     private var arInUse: Boolean = false
     private var delMask: Boolean = false
+    private var loadingNewLens: Boolean = false
 
     //Camera
     private var hasCamera: Boolean = false
@@ -52,7 +57,23 @@ class MainActivity : AppCompatActivity() {
     private var arBtnLeft: Button? = null
     private var arBtnRight: Button? = null
 
-    var asset = Array(2) { R.raw.fox_face; R.drawable.fox_face_mesh_texture }
+    // Ar Assets
+    private val baseLink: String = "https://firebasestorage.googleapis.com/v0/b/social-media-android-app-2022.appspot.com/o/Lenses%2Fmodels%2F"
+    private val ringofgood: String = "ringofgood.glb?alt=media&token=9790aea2-3b6f-41eb-8259-aac837b17fa3"
+    private val void: String = "goldenface01.glb?alt=media&token=0829dc75-68ee-42be-a978-dc6d2ea89e12"
+    private val monkey: String = "monkey01.glb?alt=media&token=e655bb5f-6f96-43b4-b4e4-ca3ee17b1a93"
+    private val hearts01: String = "hearts01facelens.glb?alt=media&token=96254791-e71f-4b27-95f0-4c4dbf39b000"
+    private var currentArAsset: Int = 0
+    private var assets = arrayOf<Any>(
+        arrayOf<Any>("Test", "$baseLink$ringofgood", R.drawable.fox_face_mesh_texture),
+        arrayOf<Any>("Test", "$baseLink$ringofgood", R.drawable.face_mask_test_gimp),
+        arrayOf<Any>("Test", "$baseLink$ringofgood", R.drawable.lavalens01),
+        arrayOf<Any>("Test", "$baseLink$hearts01", R.drawable.face_mask_test_gimp02),
+        arrayOf<Any>("Test", "$baseLink$hearts01", R.drawable.germany_lens01),
+        arrayOf<Any>("Test", "$baseLink$ringofgood", R.drawable.crown_texture),
+        arrayOf<Any>("Test", "$baseLink$hearts01", R.drawable.nova01),
+        arrayOf<Any>("Test", "$baseLink$void", R.drawable.nova02)
+    )
 
     private companion object {
         const val TAG = "MainActivity"
@@ -105,14 +126,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    fun loadLens(context: Context, asset: Int?, texture: Int?) {
+    fun loadLens(context: Context, asset: String?, texture: Int?) {
+        loadingNewLens = true
         // Load the model.
         if (asset == null || texture == null) {
             this.modelRenderable = null
             this.texture = null
         } else {
             ModelRenderable.builder()
-                .setSource(this, asset)
+                .setSource(
+                    this,
+                    RenderableSource.builder()
+                        .setSource(this, Uri.parse(asset), RenderableSource.SourceType.GLB)
+                        .build()
+                )
                 .build()
                 .thenAccept(Consumer { renderable: ModelRenderable ->
                     this.modelRenderable = renderable
@@ -135,6 +162,7 @@ class MainActivity : AppCompatActivity() {
                     null
                 }
         }
+        loadingNewLens = false
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -153,7 +181,13 @@ class MainActivity : AppCompatActivity() {
             val augmentedFaces = frame?.getUpdatedTrackables(AugmentedFace::class.java)
             if (augmentedFaces != null) {
                 for (augmentedFace: AugmentedFace in augmentedFaces) {
-                    if (!isAdded) {if (modelRenderable != null || texture != null) {renderAr(customArFragment, augmentedFace)}}
+                    if (!isAdded) {
+                        if (modelRenderable != null || texture != null) {
+                            if (!loadingNewLens) {
+                                renderAr(customArFragment, augmentedFace)
+                            }
+                        }
+                    }
                     else{
                         if (delMask){
                             clearAr(customArFragment, augmentedFace)
@@ -167,19 +201,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun clearAr(customArFragment: CustomArFragment, augmentedFace: AugmentedFace) {
-        try {
-            customArFragment.arSceneView.scene.removeChild(faceNodeMap[augmentedFace])
-            isAdded = false
-        } catch (e: Exception) {}
+        customArFragment.arSceneView.scene.removeChild(faceNodeMap[augmentedFace])
+        isAdded = false
     }
 
     private fun renderAr(customArFragment: CustomArFragment, augmentedFace: AugmentedFace) {
         val augmentedFaceMode = AugmentedFaceNode(augmentedFace)
         augmentedFaceMode.setParent(customArFragment.arSceneView.scene)
+
         augmentedFaceMode.faceRegionsRenderable = modelRenderable
         augmentedFaceMode.faceMeshTexture = texture
+
         faceNodeMap.put(augmentedFace, augmentedFaceMode)
         isAdded = true
+
         val iterator: MutableIterator<Map.Entry<AugmentedFace, AugmentedFaceNode>> =
             faceNodeMap.entries.iterator()
         val (face, node) = iterator.next()
@@ -262,11 +297,43 @@ class MainActivity : AppCompatActivity() {
             arBtnRight!!.visibility = View.GONE
         } else {
             arInUse = true
-            loadLens(this, R.raw.fox_face, R.drawable.fox_face_mesh_texture)
-            arBtnLeft!!.visibility = View.VISIBLE
-            arBtnRight!!.visibility = View.VISIBLE
+            val arAsset = Array.get(assets[currentArAsset], 1) as String?
+            val arTexture = Array.get(assets[currentArAsset], 2) as Int?
+            loadLens(this, arAsset, arTexture)
+            if (currentArAsset > 0){arBtnLeft!!.visibility = View.VISIBLE}
+            if (currentArAsset < assets.size - 1){arBtnRight!!.visibility = View.VISIBLE}
         }
     }
-    fun switchLeftAr(view: View) {}
-    fun switchRightAr(view: View) {}
+    @RequiresApi(Build.VERSION_CODES.N)
+    fun switchLeftAr(view: View) {
+        currentArAsset--
+        if (currentArAsset <= 0){
+            arBtnLeft!!.visibility = View.GONE
+            currentArAsset = 0
+        }else{arBtnLeft!!.visibility = View.VISIBLE}
+        if (currentArAsset >= assets.size-1){
+            arBtnRight!!.visibility = View.GONE
+            currentArAsset = assets.size-1
+        }else{arBtnRight!!.visibility = View.VISIBLE}
+        val arAsset = Array.get(assets[currentArAsset], 1) as String?
+        val arTexture = Array.get(assets[currentArAsset], 2) as Int?
+        loadLens(this, arAsset, arTexture)
+        delMask = true
+    }
+    @RequiresApi(Build.VERSION_CODES.N)
+    fun switchRightAr(view: View) {
+        currentArAsset++
+        if (currentArAsset <= 0){
+            arBtnLeft!!.visibility = View.GONE
+            currentArAsset = 0
+        }else{ arBtnLeft!!.visibility = View.VISIBLE }
+        if (currentArAsset >= assets.size-1){
+            arBtnRight!!.visibility = View.GONE
+            currentArAsset = assets.size - 1
+        }else{arBtnRight!!.visibility = View.VISIBLE}
+        val arAsset = Array.get(assets[currentArAsset], 1) as String?
+        val arTexture = Array.get(assets[currentArAsset], 2) as Int?
+        loadLens(this, arAsset, arTexture)
+        delMask = true
+    }
 }
