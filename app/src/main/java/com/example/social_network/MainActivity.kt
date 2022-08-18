@@ -81,7 +81,8 @@ class MainActivity : AppCompatActivity() {
         arrayOf<Any>("Test", "$baseLink$hearts01", R.drawable.germany_lens01),
         arrayOf<Any>("Test", "$baseLink$ringofgood01", R.drawable.crown_texture),
         arrayOf<Any>("Test", "$baseLink$ringofgood01", R.drawable.nova01),
-        arrayOf<Any>("Test", "$baseLink$void", R.drawable.nova02)
+        arrayOf<Any>("Test", "$baseLink$void", R.drawable.nova02),
+        arrayOf<Any>("Test", "§void", R.drawable.daniel01)
     )
 
     private companion object {
@@ -190,9 +191,9 @@ class MainActivity : AppCompatActivity() {
             val augmentedFaces = frame?.getUpdatedTrackables(AugmentedFace::class.java)
             if (augmentedFaces != null) {
                 for (augmentedFace: AugmentedFace in augmentedFaces) {
-                    if (!isAdded) { if (modelRenderable != null || texture != null) { if (!loadingNewLens) { renderAr(customArFragment, augmentedFace) } } }
+                    if (!isAdded) { if (modelRenderable != null || texture != null) {renderAr(customArFragment, augmentedFace) } }
                     else{
-                        if (texture != last_texture && modelRenderable != last_model){ delMask = true }
+                        if (texture != last_texture || modelRenderable != last_model){ delMask = true }
                         if (delMask){
                             clearAr(customArFragment, augmentedFace)
                             delMask = false
