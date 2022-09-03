@@ -14,6 +14,7 @@ import android.os.Handler
 import android.util.Log
 import android.view.View
 import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -30,12 +31,18 @@ import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.rendering.Renderable
 import com.google.ar.sceneform.rendering.Texture
 import com.google.ar.sceneform.ux.AugmentedFaceNode
+import com.google.firebase.database.ktx.database
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import java.io.*
 import java.lang.reflect.Array
 import java.util.function.Consumer
 
 
 class MainActivity : AppCompatActivity() {
+    //Firebase
+    val realTimeDatabase = Firebase.database
+    val db = Firebase.firestore
     // Google ARCore
     private var modelRenderable: ModelRenderable? = null
     private var texture: Texture? = null
@@ -61,29 +68,22 @@ class MainActivity : AppCompatActivity() {
     private var arBtnLeft: Button? = null
     private var arBtnRight: Button? = null
 
+    //Text views
+    private var arLensTxt: TextView? = null
+    private var arLensName: TextView? = null
+
     // Ar Assets
-    //Models:
-    private val baseLink: String = "https://firebasestorage.googleapis.com/v0/b/social-media-android-app-2022.appspot.com/o/Lenses%2Fmodels%2F"
-    private val fox_face: String = "fox_face.glb?alt=media&token=6106a707-8d86-4657-9461-b0990341a222"
-    private val ringofgood: String = "ringofgood.glb?alt=media&token=9790aea2-3b6f-41eb-8259-aac837b17fa3"
+    //Base links:
+    private val baseLink: String = "https://firebasestorage.googleapis.com/v0/b/social-media-android-app-2022.appspot.com/o/Lenses%2F"
+    private val baseLinkModels: String = "models%2F"
+    private val baseLinkTextures: String = "textures%2F"
+    // Models
     private var ringofgood01: String = "ringofgood01.glb?alt=media&token=5b7b25ac-b95c-4db0-a2de-6b9ded1fedb8"
-    private var planetaryring: String = "planetaryring.glb?alt=media&token=462a5fa2-66ab-45f3-8a8e-fd6b5c75fed1"
-    private val void: String = "goldenface01.glb?alt=media&token=0829dc75-68ee-42be-a978-dc6d2ea89e12"
-    private val monkey: String = "monkey01.glb?alt=media&token=e655bb5f-6f96-43b4-b4e4-ca3ee17b1a93"
     private val hearts01: String = "hearts01facelens.glb?alt=media&token=96254791-e71f-4b27-95f0-4c4dbf39b000"
     //asset system:
     private var currentArAsset: Int = 0
-    private var assets = arrayOf<Any>(
-        arrayOf<Any>("Test", "$baseLink$fox_face", R.drawable.fox_face_mesh_texture),
-        arrayOf<Any>("Test", "$baseLink$ringofgood01", R.drawable.face_mask_test_gimp),
-        arrayOf<Any>("Test", "$baseLink$ringofgood01", R.drawable.lavalens01),
-        arrayOf<Any>("Test", "$baseLink$hearts01", R.drawable.face_mask_test_gimp02),
-        arrayOf<Any>("Test", "$baseLink$hearts01", R.drawable.germany_lens01),
-        arrayOf<Any>("Test", "$baseLink$ringofgood01", R.drawable.crown_texture),
-        arrayOf<Any>("Test", "$baseLink$ringofgood01", R.drawable.nova01),
-        arrayOf<Any>("Test", "$baseLink$void", R.drawable.nova02),
-        arrayOf<Any>("Test", "§void", R.drawable.daniel01)
-    )
+    private var assets = arrayOf<Any>()
+    private var onlineAssets = arrayOf<Any>()
 
     private companion object {
         const val TAG = "MainActivity"
@@ -98,8 +98,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setTheme(R.style.Theme_Socialnetwork)
         setContentView(R.layout.activity_main)
-        arBtnLeft = this.findViewById(R.id.btnLeftAr)
-        arBtnRight = this.findViewById(R.id.btnRightAr)
+        findElements()
+        findLenses()
         hasCamera = hasCameraHardware(this)
         if (hasCamera) {
             checkAr()
@@ -111,6 +111,39 @@ class MainActivity : AppCompatActivity() {
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
         }
+    }
+
+    private fun findLenses() {
+        val lenses = db.collection("lenses")
+        lenses
+            .get()
+            .addOnSuccessListener { result ->
+                for (document in result) {
+                    val onlineAssetsList = onlineAssets.toMutableList()
+                    onlineAssetsList.add(
+                        arrayOf(
+                            document.data["name"],
+                            document.data["model"],
+                            document.data["texture"]
+                        )
+                    )
+                    onlineAssets = onlineAssetsList.toTypedArray()
+                    assets = onlineAssets
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.w(TAG, "Error getting documents.", exception)
+                Toast.makeText(this, "Error getting lenses", Toast.LENGTH_LONG).show()
+            }
+    }
+
+    private fun findElements(){
+        //Buttons
+        arBtnLeft = this.findViewById(R.id.btnLeftAr)
+        arBtnRight = this.findViewById(R.id.btnRightAr)
+        //Text views
+        arLensTxt = this.findViewById(R.id.lenstxt)
+        arLensName = this.findViewById(R.id.lensname)
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
@@ -136,7 +169,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    fun loadLens(context: Context, asset: String?, texture: Int?) {
+    fun loadLens(context: Context, asset: String?, texture: String?) {
         loadingNewLens = true
         // Load the model.
         if (asset == null || texture == null) {
@@ -162,7 +195,7 @@ class MainActivity : AppCompatActivity() {
                 }
             // Load the texture.
             Texture.builder()
-                .setSource(this, texture)
+                .setSource(this, Uri.parse(texture))
                 .build()
                 .thenAccept(Consumer { texture: Texture ->
                     this.texture = texture
@@ -303,12 +336,17 @@ class MainActivity : AppCompatActivity() {
             loadLens(this, null, null)
             arBtnLeft!!.visibility = View.GONE
             arBtnRight!!.visibility = View.GONE
+            arLensTxt!!.visibility = View.GONE
+            arLensName!!.visibility = View.GONE
         } else {
             arInUse = true
             val arAsset = Array.get(assets[currentArAsset], 1) as String?
-            val arTexture = Array.get(assets[currentArAsset], 2) as Int?
+            val arTexture = Array.get(assets[currentArAsset], 2) as String?
             loadingNewLens = true
             loadLens(this, arAsset, arTexture)
+            arLensTxt!!.visibility = View.VISIBLE
+            arLensName!!.visibility = View.VISIBLE
+            updateLensName()
             if (currentArAsset > 0){arBtnLeft!!.visibility = View.VISIBLE}
             if (currentArAsset < assets.size - 1){arBtnRight!!.visibility = View.VISIBLE}
         }
@@ -325,9 +363,10 @@ class MainActivity : AppCompatActivity() {
             currentArAsset = assets.size-1
         }else{arBtnRight!!.visibility = View.VISIBLE}
         val arAsset = Array.get(assets[currentArAsset], 1) as String?
-        val arTexture = Array.get(assets[currentArAsset], 2) as Int?
+        val arTexture = Array.get(assets[currentArAsset], 2) as String?
         loadingNewLens = true
         loadLens(this, arAsset, arTexture)
+        updateLensName()
     }
     @RequiresApi(Build.VERSION_CODES.N)
     fun switchRightAr(view: View) {
@@ -341,8 +380,13 @@ class MainActivity : AppCompatActivity() {
             currentArAsset = assets.size - 1
         }else{arBtnRight!!.visibility = View.VISIBLE}
         val arAsset = Array.get(assets[currentArAsset], 1) as String?
-        val arTexture = Array.get(assets[currentArAsset], 2) as Int?
+        val arTexture = Array.get(assets[currentArAsset], 2) as String?
         loadingNewLens = true
         loadLens(this, arAsset, arTexture)
+        updateLensName()
+    }
+
+    private fun updateLensName(){
+        arLensName!!.text = Array.get(assets[currentArAsset], 0) as String?
     }
 }
