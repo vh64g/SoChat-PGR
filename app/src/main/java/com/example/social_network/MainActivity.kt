@@ -73,18 +73,10 @@ class MainActivity : AppCompatActivity() {
     private var arLensName: TextView? = null
 
     // Ar Assets
-    //Base links:
-    private val baseLink: String = "https://firebasestorage.googleapis.com/v0/b/social-media-android-app-2022.appspot.com/o/Lenses%2F"
-    private val baseLinkModels: String = "models%2F"
-    private val baseLinkTextures: String = "textures%2F"
-    // Models
-    private var ringofgood01: String = "ringofgood01.glb?alt=media&token=5b7b25ac-b95c-4db0-a2de-6b9ded1fedb8"
-    private val hearts01: String = "hearts01facelens.glb?alt=media&token=96254791-e71f-4b27-95f0-4c4dbf39b000"
     //asset system:
     private var currentArAsset: Int = 0
     private var assets = arrayOf<Any>()
     private var onlineAssets = arrayOf<Any>()
-
     private companion object {
         const val TAG = "MainActivity"
     }
