@@ -14,6 +14,7 @@ import android.os.Handler
 import android.util.Log
 import android.view.View
 import android.widget.Button
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -27,6 +28,7 @@ import com.google.ar.core.Frame
 import com.google.ar.core.TrackingState
 import com.google.ar.sceneform.FrameTime
 import com.google.ar.sceneform.assets.RenderableSource
+import com.google.ar.sceneform.math.Vector3
 import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.rendering.Renderable
 import com.google.ar.sceneform.rendering.Texture
@@ -77,6 +79,7 @@ class MainActivity : AppCompatActivity() {
     private var currentArAsset: Int = 0
     private var assets = arrayOf<Any>()
     private var onlineAssets = arrayOf<Any>()
+
     private companion object {
         const val TAG = "MainActivity"
     }
@@ -211,19 +214,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateListener(customArFragment: CustomArFragment) {
         customArFragment.arSceneView.scene.addOnUpdateListener { frameTime: FrameTime ->
-            val frame: Frame? = customArFragment.arSceneView.arFrame
-            this.currentFrame = frame
+            val frame: Frame? = customArFragment.arSceneView.arFrame; this.currentFrame = frame
             val augmentedFaces = frame?.getUpdatedTrackables(AugmentedFace::class.java)
             if (augmentedFaces != null) {
-                for (augmentedFace: AugmentedFace in augmentedFaces) {
-                    if (!isAdded) { if (modelRenderable != null || texture != null) {renderAr(customArFragment, augmentedFace) } }
-                    else{
-                        if (texture != last_texture || modelRenderable != last_model){ delMask = true }
-                        if (delMask){
-                            clearAr(customArFragment, augmentedFace)
-                            delMask = false
-                        }
+                if(!isAdded){
+                    for (augmentedFace: AugmentedFace in augmentedFaces) {
+                        if (modelRenderable != null || texture != null){renderAr(customArFragment, augmentedFace)}
                     }
+                }
+                else{
+                    if (texture != last_texture || modelRenderable != last_model){ delMask = true }
+                    if (delMask){ for (augmentedFace: AugmentedFace in augmentedFaces) { clearAr(customArFragment, augmentedFace); delMask = false} }
                 }
             }
             if (capturePicture) {capturePicture = false;savePicture()}
@@ -278,6 +279,7 @@ class MainActivity : AppCompatActivity() {
         if (!out.parentFile?.exists()!!) {out.parentFile?.mkdirs()}
 
         val image:Image? = currentFrame?.acquireCameraImage()
+
         val imageFormat: Int = image!!.format
         if (imageFormat == ImageFormat.YUV_420_888) {
             // Create a bitmap.

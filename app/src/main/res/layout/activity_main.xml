@@ -11,35 +11,31 @@
         android:name="com.example.social_network.CustomArFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:visibility="visible"
         tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="0dp" />
+        tools:layout_editor_absoluteY="359dp" />
 
-    <Button
-        android:id="@+id/BtnSwitchCam"
-        style="@style/Widget.Material3.Button.Icon"
+    <TextView
+        android:id="@+id/lenstxt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:insetTop="0dp"
-        android:insetBottom="0dp"
-        app:backgroundTint="#00FFFFFF"
-        app:icon="@drawable/switch_camera_icon"
-        app:iconPadding="0dp"
-        app:iconSize="30dp"
-        app:iconTint="#FFFFFF"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:text="Lens:"
+        android:textColor="#000000"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
-        android:id="@+id/BtnFaceAr"
+    <TextView
+        android:id="@+id/lensname"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="FACEAR"
-        android:onClick="toggleFaceAr"
-        app:backgroundTint="#4A606060"
-        app:layout_constraintBottom_toTopOf="@+id/BtnTakePic"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.507"
-        app:layout_constraintStart_toStartOf="parent" />
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="12dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/lenstxt" />
 
     <Button
         android:id="@+id/BtnTakePic"
@@ -63,6 +59,29 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
+        android:id="@+id/btnRightAr"
+        style="@style/Widget.Material3.Button.Icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        android:insetTop="0dp"
+        android:insetRight="0dp"
+        android:insetBottom="0dp"
+        android:onClick="switchRightAr"
+        android:visibility="gone"
+        app:backgroundTint="#00FFFFFF"
+        app:backgroundTintMode="src_in"
+        app:icon="@drawable/logo_circle"
+        app:iconPadding="0dp"
+        app:iconSize="50dp"
+        app:iconTint="#00FFFFFF"
+        app:iconTintMode="add"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.9"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
         android:id="@+id/btnLeftAr"
         style="@style/Widget.Material3.Button.Icon"
         android:layout_width="wrap_content"
@@ -71,8 +90,8 @@
         android:insetTop="0dp"
         android:insetRight="0dp"
         android:insetBottom="0dp"
-        android:visibility="gone"
         android:onClick="switchLeftAr"
+        android:visibility="gone"
         app:backgroundTint="#00FFFFFF"
         app:backgroundTintMode="src_in"
         app:icon="@drawable/logo_circle"
@@ -86,48 +105,31 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
-        android:id="@+id/btnRightAr"
+        android:id="@+id/BtnFaceAr"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="toggleFaceAr"
+        android:text="FACEAR"
+        app:backgroundTint="#4A606060"
+        app:layout_constraintBottom_toTopOf="@+id/BtnTakePic"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.507"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/BtnSwitchCam"
         style="@style/Widget.Material3.Button.Icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp"
         android:insetTop="0dp"
-        android:insetRight="0dp"
         android:insetBottom="0dp"
-        android:visibility="gone"
-        android:onClick="switchRightAr"
         app:backgroundTint="#00FFFFFF"
-        app:backgroundTintMode="src_in"
-        app:icon="@drawable/logo_circle"
+        app:icon="@drawable/switch_camera_icon"
         app:iconPadding="0dp"
-        app:iconSize="50dp"
-        app:iconTint="#00FFFFFF"
-        app:iconTintMode="add"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:iconSize="30dp"
+        app:iconTint="#FFFFFF"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.9"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <TextView
-        android:id="@+id/lenstxt"
-        android:visibility="gone"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:text="Lens:"
-        android:textColor="#000000"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/lensname"
-        android:visibility="gone"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="12dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/lenstxt" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
