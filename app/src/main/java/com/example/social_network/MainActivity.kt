@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.graphics.*
+import android.graphics.ImageFormat
 import android.media.Image
 import android.net.Uri
 import android.os.Build
@@ -20,12 +21,9 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContentProviderCompat.requireContext
-import com.google.ar.core.ArCoreApk
+import com.google.ar.core.*
 import com.google.ar.sceneform.Sun
 import com.google.ar.sceneform.AnchorNode
-import com.google.ar.core.AugmentedFace
-import com.google.ar.core.Frame
-import com.google.ar.core.TrackingState
 import com.google.ar.sceneform.FrameTime
 import com.google.ar.sceneform.assets.RenderableSource
 import com.google.ar.sceneform.math.Vector3
@@ -205,8 +203,7 @@ class MainActivity : AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.N)
     private fun manageArFragment() {
-        val customArFragment: CustomArFragment =
-            supportFragmentManager.findFragmentById(R.id.arFragment) as CustomArFragment
+        val customArFragment: CustomArFragment = supportFragmentManager.findFragmentById(R.id.arFragment) as CustomArFragment
         loadLens(this, null, null)
         customArFragment.arSceneView.cameraStreamRenderPriority = Renderable.RENDER_PRIORITY_FIRST
         updateListener(customArFragment)
@@ -227,7 +224,7 @@ class MainActivity : AppCompatActivity() {
                     if (delMask){ for (augmentedFace: AugmentedFace in augmentedFaces) { clearAr(customArFragment, augmentedFace); delMask = false} }
                 }
             }
-            if (capturePicture) {capturePicture = false;savePicture()}
+            if (capturePicture) {capturePicture = false;savePicture(customArFragment)}
         }
     }
 
@@ -263,7 +260,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     @Throws(IOException::class)
-    fun savePicture() {
+    fun savePicture(customArFragment: CustomArFragment) {
 
         mWidth = Resources.getSystem().displayMetrics.widthPixels
         mHeight = Resources.getSystem().displayMetrics.heightPixels
@@ -278,7 +275,7 @@ class MainActivity : AppCompatActivity() {
         // Make sure the directory exists
         if (!out.parentFile?.exists()!!) {out.parentFile?.mkdirs()}
 
-        val image:Image? = currentFrame?.acquireCameraImage()
+        val image:Image? = customArFragment.arSceneView.arFrame?.acquireCameraImage()
 
         val imageFormat: Int = image!!.format
         if (imageFormat == ImageFormat.YUV_420_888) {
@@ -338,9 +335,9 @@ class MainActivity : AppCompatActivity() {
             val arTexture = Array.get(assets[currentArAsset], 2) as String?
             loadingNewLens = true
             loadLens(this, arAsset, arTexture)
+            updateLensName()
             arLensTxt!!.visibility = View.VISIBLE
             arLensName!!.visibility = View.VISIBLE
-            updateLensName()
             if (currentArAsset > 0){arBtnLeft!!.visibility = View.VISIBLE}
             if (currentArAsset < assets.size - 1){arBtnRight!!.visibility = View.VISIBLE}
         }
@@ -348,14 +345,7 @@ class MainActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.N)
     fun switchLeftAr(view: View) {
         currentArAsset--
-        if (currentArAsset <= 0){
-            arBtnLeft!!.visibility = View.GONE
-            currentArAsset = 0
-        }else{arBtnLeft!!.visibility = View.VISIBLE}
-        if (currentArAsset >= assets.size-1){
-            arBtnRight!!.visibility = View.GONE
-            currentArAsset = assets.size-1
-        }else{arBtnRight!!.visibility = View.VISIBLE}
+        manageBtnVisibility()
         val arAsset = Array.get(assets[currentArAsset], 1) as String?
         val arTexture = Array.get(assets[currentArAsset], 2) as String?
         loadingNewLens = true
@@ -365,6 +355,15 @@ class MainActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.N)
     fun switchRightAr(view: View) {
         currentArAsset++
+        manageBtnVisibility()
+        val arAsset = Array.get(assets[currentArAsset], 1) as String?
+        val arTexture = Array.get(assets[currentArAsset], 2) as String?
+        loadingNewLens = true
+        loadLens(this, arAsset, arTexture)
+        updateLensName()
+    }
+
+    private fun manageBtnVisibility(){
         if (currentArAsset <= 0){
             arBtnLeft!!.visibility = View.GONE
             currentArAsset = 0
@@ -373,14 +372,18 @@ class MainActivity : AppCompatActivity() {
             arBtnRight!!.visibility = View.GONE
             currentArAsset = assets.size - 1
         }else{arBtnRight!!.visibility = View.VISIBLE}
-        val arAsset = Array.get(assets[currentArAsset], 1) as String?
-        val arTexture = Array.get(assets[currentArAsset], 2) as String?
-        loadingNewLens = true
-        loadLens(this, arAsset, arTexture)
-        updateLensName()
     }
 
     private fun updateLensName(){
         arLensName!!.text = Array.get(assets[currentArAsset], 0) as String?
+    }
+
+    fun uploadNewLens(view: View) {
+        val intent = Intent(this, uploadLenses::class.java)
+        startActivity(intent)
+    }
+
+    fun reloadLenses(view: View) {
+        findLenses()
     }
 }

@@ -24,6 +24,9 @@
         android:theme="@style/splashScreenTheme"
         tools:targetApi="31">
         <activity
+            android:name=".uploadLenses"
+            android:exported="false" />
+        <activity
             android:name=".searchLenses"
             android:exported="false" />
 
@@ -36,7 +39,7 @@
 
         <activity
             android:name=".MainActivity"
-            android:exported="true"></activity>
+            android:exported="true" />
         <activity
             android:name=".signup"
             android:exported="false" />
