@@ -1,6 +1,7 @@
 package com.example.social_network
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -9,10 +10,13 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.auth.ktx.userProfileChangeRequest
+import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
 class signup : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
+    private val db = Firebase.firestore
 
     private companion object {
         private const val TAG = "SignUpActivity"
@@ -84,12 +88,16 @@ class signup : AppCompatActivity() {
                         // Sign in success, update UI with the signed-in user's information
                         Log.d(TAG, "createUserWithEmail:success")
                         val user = auth.currentUser
-                        user?.sendEmailVerification()
-                            ?.addOnCompleteListener { task ->
-                                if (task.isSuccessful) {
-                                    Toast.makeText(baseContext, "Verification email sent to ${user?.email}", Toast.LENGTH_SHORT).show()
-                                }
-                            }
+                        val newuser = hashMapOf(
+                            "username" to usernameText,
+                            "email" to emailText,
+                            "uid" to user?.uid,
+                            "posts" to listOf<Any>()
+                        )
+                        db.collection("users").add(newuser)
+                        val profileUpdates = userProfileChangeRequest { displayName = usernameText }
+                        user?.updateProfile(profileUpdates)
+                        user?.sendEmailVerification()?.addOnCompleteListener { task -> if (task.isSuccessful) { Toast.makeText(baseContext, "Verification email sent to ${user.email}", Toast.LENGTH_SHORT).show() } }
                         val intent: Intent = Intent(applicationContext, MainActivity::class.java)
                         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                         startActivity(intent)

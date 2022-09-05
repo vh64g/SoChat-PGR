@@ -265,19 +265,9 @@ class MainActivity : AppCompatActivity() {
         mWidth = Resources.getSystem().displayMetrics.widthPixels
         mHeight = Resources.getSystem().displayMetrics.heightPixels
 
-        // Create a file in the Pictures/HelloAR album.
-        val out = File(
-            Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES
-            ).toString() + "/SoChat", "Img" +
-                    java.lang.Long.toHexString(System.currentTimeMillis()) + ".png"
-        )
-        // Make sure the directory exists
-        if (!out.parentFile?.exists()!!) {out.parentFile?.mkdirs()}
-
         val image:Image? = customArFragment.arSceneView.arFrame?.acquireCameraImage()
-
         val imageFormat: Int = image!!.format
+
         if (imageFormat == ImageFormat.YUV_420_888) {
             // Create a bitmap.
             val bmp_res: ByteArray? = NV21toJPEG(YUV_420_888toNV21(image), image.width, image.height)
@@ -285,12 +275,14 @@ class MainActivity : AppCompatActivity() {
             var mat:Matrix = Matrix()
             mat.postRotate(-90f)
             val rotatedBmp: Bitmap = Bitmap.createBitmap(bmp!!, 0, 0, bmp.width, bmp.height, mat, true)
-            // Write it to disk.
-            val fos = FileOutputStream(out)
-            rotatedBmp.compress(Bitmap.CompressFormat.PNG, 100, fos)
-            fos.flush()
-            fos.close()
-            Toast.makeText(this, "Image saved", Toast.LENGTH_LONG).show()
+
+            // Send to TakePhotoActivity
+            val intent = Intent(this, TakePhoto::class.java)
+            val stream = ByteArrayOutputStream()
+            rotatedBmp.compress(Bitmap.CompressFormat.PNG, 100, stream)
+            val byteArray: ByteArray = stream.toByteArray()
+            intent.putExtra("image", byteArray)
+            startActivity(intent)
         }
 
     }
