@@ -24,6 +24,9 @@
         android:theme="@style/splashScreenTheme"
         tools:targetApi="31">
         <activity
+            android:name=".watchPosts"
+            android:exported="false" />
+        <activity
             android:name=".TakePhoto"
             android:exported="false" />
         <activity

@@ -1,5 +1,6 @@
 package com.example.social_network
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -10,23 +11,16 @@ import android.media.Image
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Environment
 import android.os.Handler
 import android.util.Log
 import android.view.View
-import android.widget.Button
-import android.widget.ProgressBar
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContentProviderCompat.requireContext
+import app.com.kotlinapp.OnSwipeTouchListener
 import com.google.ar.core.*
-import com.google.ar.sceneform.Sun
-import com.google.ar.sceneform.AnchorNode
 import com.google.ar.sceneform.FrameTime
 import com.google.ar.sceneform.assets.RenderableSource
-import com.google.ar.sceneform.math.Vector3
 import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.rendering.Renderable
 import com.google.ar.sceneform.rendering.Texture
@@ -39,10 +33,14 @@ import java.lang.reflect.Array
 import java.util.function.Consumer
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(){
+
+    private lateinit var gestureDetectorLayout: RelativeLayout
+
     //Firebase
     val realTimeDatabase = Firebase.database
     val db = Firebase.firestore
+
     // Google ARCore
     private var modelRenderable: ModelRenderable? = null
     private var texture: Texture? = null
@@ -93,6 +91,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         findElements()
         findLenses()
+        gestureDetector()
         hasCamera = hasCameraHardware(this)
         if (hasCamera) {
             checkAr()
@@ -137,6 +136,28 @@ class MainActivity : AppCompatActivity() {
         //Text views
         arLensTxt = this.findViewById(R.id.lenstxt)
         arLensName = this.findViewById(R.id.lensname)
+        //Gesture detector
+        gestureDetectorLayout = this.findViewById(R.id.gestureDetectorLayoutMainActivity)
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private fun gestureDetector(){
+        gestureDetectorLayout.setOnTouchListener(object : OnSwipeTouchListener(this@MainActivity) {
+            override fun onSwipeLeft() {
+                super.onSwipeLeft()
+            }
+            override fun onSwipeRight() {
+                super.onSwipeRight()
+            }
+            override fun onSwipeUp() {
+                super.onSwipeUp()
+                intent = Intent(applicationContext, watchPosts::class.java)
+                startActivity(intent)
+            }
+            override fun onSwipeDown() {
+                super.onSwipeDown()
+            }
+        })
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
