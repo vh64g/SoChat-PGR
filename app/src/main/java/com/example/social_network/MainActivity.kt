@@ -300,7 +300,8 @@ class MainActivity : AppCompatActivity(){
             val bmp_res: ByteArray? = NV21toJPEG(YUV_420_888toNV21(image), image.width, image.height)
             val bmp:Bitmap? = BitmapFactory.decodeByteArray(bmp_res, 0, bmp_res!!.size, null)
             var mat:Matrix = Matrix()
-            mat.postRotate(-90f)
+            mat.postRotate(+90f)
+            mat.preScale(-1f, 1f)
             val rotatedBmp: Bitmap = Bitmap.createBitmap(bmp!!, 0, 0, bmp.width, bmp.height, mat, true)
 
             // Send to TakePhotoActivity
