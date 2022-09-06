@@ -95,7 +95,9 @@ class TakePhoto : AppCompatActivity() {
                         "content" to postContent,
                         "image" to uri,
                         "date" to System.currentTimeMillis(),
-                        "likes" to 0
+                        "likes" to 0,
+                        "likedBy" to mutableListOf<Any?>(),
+                        "authorUid" to auth.currentUser?.uid
                     )
                     db.collection("posts").add(newPost)
                     Toast.makeText(this, "Upload successful", Toast.LENGTH_LONG).show()

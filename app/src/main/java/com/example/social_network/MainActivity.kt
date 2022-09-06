@@ -25,6 +25,8 @@ import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.rendering.Renderable
 import com.google.ar.sceneform.rendering.Texture
 import com.google.ar.sceneform.ux.AugmentedFaceNode
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.ktx.database
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -38,6 +40,7 @@ class MainActivity : AppCompatActivity(){
     private lateinit var gestureDetectorLayout: RelativeLayout
 
     //Firebase
+    lateinit var auth: FirebaseAuth
     val realTimeDatabase = Firebase.database
     val db = Firebase.firestore
 
@@ -89,6 +92,7 @@ class MainActivity : AppCompatActivity(){
         super.onCreate(savedInstanceState)
         setTheme(R.style.Theme_Socialnetwork)
         setContentView(R.layout.activity_main)
+        auth = Firebase.auth
         findElements()
         findLenses()
         gestureDetector()
@@ -145,6 +149,8 @@ class MainActivity : AppCompatActivity(){
         gestureDetectorLayout.setOnTouchListener(object : OnSwipeTouchListener(this@MainActivity) {
             override fun onSwipeLeft() {
                 super.onSwipeLeft()
+                intent = Intent(applicationContext, ProfilePage::class.java)
+                startActivity(intent)
             }
             override fun onSwipeRight() {
                 super.onSwipeRight()
