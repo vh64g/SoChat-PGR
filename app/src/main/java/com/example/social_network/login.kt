@@ -95,10 +95,18 @@ class login : AppCompatActivity() {
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
                     // Sign in success
-                    Log.d(TAG, "signInWithEmail:success")
-                    val intent: Intent = Intent(applicationContext, MainActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    startActivity(intent)
+                    val user = auth.currentUser
+                    if (user!!.isEmailVerified){
+                        Log.d(TAG, "signInWithEmail:success")
+                        val intent: Intent = Intent(applicationContext, MainActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        startActivity(intent)
+                    } else {
+                        user.sendEmailVerification()
+                            .addOnSuccessListener { auth.signOut() }
+                            .addOnFailureListener { auth.signOut() }
+                        Toast.makeText(this, "Please verify your email", Toast.LENGTH_LONG).show()
+                    }
                 } else {
                     // If sign in fails, display a message to the user.
                     Log.w(TAG, "signInWithEmail:failure", task.exception)
@@ -109,9 +117,6 @@ class login : AppCompatActivity() {
                     startActivity(intent)
                 }
             }
-        val intent: Intent = Intent(applicationContext, MainActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
     }
 
     fun signInGoogle(view: View) {

@@ -199,13 +199,15 @@ class watchPosts : AppCompatActivity() {
     }
 
     fun deletePost(view: View){
-        val post = currentPost ?: return
-        val imageUrl = post.data?.get("image")
-        val storageRef = storage.getReferenceFromUrl(imageUrl.toString())
-        storageRef.delete().addOnSuccessListener {
-            db.collection("posts").document(post.id).delete().addOnSuccessListener {
-                Toast.makeText(this, "deleted", Toast.LENGTH_SHORT).show()
-                showNewPost()
+        if(auth.currentUser?.uid == posts?.get(0)?.get("uid").toString() || auth.currentUser?.uid.toString() == "27FHEnkMGUeUOlrsmBg6EdXgsHC3"){
+            val post = currentPost ?: return
+            val imageUrl = post.data?.get("image")
+            val storageRef = storage.getReferenceFromUrl(imageUrl.toString())
+            storageRef.delete().addOnSuccessListener {
+                db.collection("posts").document(post.id).delete().addOnSuccessListener {
+                    Toast.makeText(this, "deleted", Toast.LENGTH_SHORT).show()
+                    showNewPost()
+                }
             }
         }
     }
