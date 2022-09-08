@@ -92,6 +92,7 @@ class MainActivity : AppCompatActivity(){
         super.onCreate(savedInstanceState)
         setTheme(R.style.Theme_Socialnetwork)
         setContentView(R.layout.activity_main)
+        checkForUpdates()
         auth = Firebase.auth
         findElements()
         findLenses()
@@ -107,6 +108,40 @@ class MainActivity : AppCompatActivity(){
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
         }
+    }
+
+    private fun checkForUpdates(){
+        db.collection("INFORMATION").document("BUILD").get()
+            .addOnSuccessListener { document ->
+                val newestBuild = document.data?.get("nr").toString().toInt()
+                val required = document.data?.get("required").toString().toBoolean()
+                if (newestBuild > login.BUILDNUMBER){
+                    if (required){
+                        Toast.makeText(this, "You need to update the app to continue", Toast.LENGTH_LONG).show()
+                        val intent = Intent(this, UpdateRequired::class.java)
+                        startActivity(intent)
+                        finish()
+                    } else {
+                        if (newestBuild == login.BUILDNUMBER + 1){
+                            Toast.makeText(this, "There is a new optional major update available", Toast.LENGTH_LONG).show()
+                        } else {
+                            Toast.makeText(this, "There are new major updates available, you will have to get the newest version of the app, to be able to use it", Toast.LENGTH_LONG).show()
+                            val intent = Intent(this, UpdateRequired::class.java)
+                            startActivity(intent)
+                            finish()
+                        }
+                    }
+                }
+            }
+        db.collection("INFORMATION").document("VERSION").get()
+            .addOnSuccessListener { document ->
+                val newestVersion = document.data?.get("nr").toString().toInt()
+                if (newestVersion > login.VersionNumber){
+                    if (newestVersion == login.VersionNumber + 1){
+                        Toast.makeText(this, "There is a new optional minor update available", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
     }
 
     private fun findLenses() {

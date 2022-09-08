@@ -15,14 +15,19 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.MobileAds
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
 class login : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
 
-    private companion object {
+    val db = Firebase.firestore
+
+    companion object {
         const val ADMOB_AD_UNIT_ID = "ca-app-pub-1839648225801792/8563792553"
+        const val BUILDNUMBER = 6
+        const val VersionNumber = 1
         const val TAG = "LogInActivity"
     }
 
@@ -30,9 +35,45 @@ class login : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setTheme(R.style.Theme_Socialnetwork)
         setContentView(R.layout.activity_login)
-        // Firebase
         auth = Firebase.auth
-        // Admob
+        googleAdMob()
+    }
+
+    private fun checkForUpdates(){
+        db.collection("INFORMATION").document("BUILD").get()
+            .addOnSuccessListener { document ->
+                val newestBuild = document.data?.get("nr").toString().toInt()
+                val required = document.data?.get("required").toString().toBoolean()
+                if (newestBuild > BUILDNUMBER){
+                    if (required){
+                        Toast.makeText(this, "You need to update the app to continue", Toast.LENGTH_LONG).show()
+                        val intent = Intent(this, UpdateRequired::class.java)
+                        startActivity(intent)
+                        finish()
+                    } else {
+                        if (newestBuild == BUILDNUMBER + 1){
+                            Toast.makeText(this, "There is a new optional major update available", Toast.LENGTH_LONG).show()
+                        } else {
+                            Toast.makeText(this, "There are new major updates available, you will have to get the newest version of the app, to be able to use it", Toast.LENGTH_LONG).show()
+                            val intent = Intent(this, UpdateRequired::class.java)
+                            startActivity(intent)
+                            finish()
+                        }
+                    }
+                }
+            }
+        db.collection("INFORMATION").document("VERSION").get()
+            .addOnSuccessListener { document ->
+                val newestVersion = document.data?.get("nr").toString().toInt()
+                if (newestVersion > VersionNumber){
+                    if (newestVersion == VersionNumber + 1){
+                        Toast.makeText(this, "There is a new optional minor update available", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+    }
+
+    private fun googleAdMob(){
         MobileAds.initialize(this) {}
         val adLoader = AdLoader.Builder(this, ADMOB_AD_UNIT_ID)
             .forNativeAd { nativeAd ->
@@ -46,12 +87,11 @@ class login : AppCompatActivity() {
             }
             .build()
         adLoader.loadAd(AdRequest.Builder().build())
-        // Buttons:
-
     }
 
     public override fun onStart() {
         super.onStart()
+        checkForUpdates()
         // Check if user is signed in
         val currentUser = auth.currentUser
         var valid: Boolean = true

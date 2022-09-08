@@ -163,5 +163,4 @@ class ProfilePage : AppCompatActivity() {
             pwInfoLayout?.visibility = View.GONE
         }
     }
-
 }
