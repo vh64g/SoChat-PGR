@@ -12,6 +12,7 @@ import app.com.kotlinapp.OnSwipeTouchListener
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
@@ -64,7 +65,7 @@ class watchPosts : AppCompatActivity() {
 
     private fun getPosts(){
         if (viewMode == "normal") {
-            db.collection("posts").get().addOnSuccessListener { documents ->
+            db.collection("posts").orderBy("date", Query.Direction.DESCENDING).get().addOnSuccessListener { documents ->
                 posts = documents.toMutableList()
                 if (posts != null && posts!!.size > 0) {
                     if(auth.currentUser?.uid == posts?.get(0)?.get("uid").toString() || auth.currentUser?.uid.toString() == "27FHEnkMGUeUOlrsmBg6EdXgsHC3"){ deleteBtn?.visibility = Button.VISIBLE }
@@ -73,7 +74,7 @@ class watchPosts : AppCompatActivity() {
                 showNewPost()
             }
         } else if (viewMode == "user") {
-            db.collection("posts").whereEqualTo("authorUid", auth.currentUser?.uid).get().addOnSuccessListener { documents ->
+            db.collection("posts").whereEqualTo("authorUid", auth.currentUser?.uid).orderBy("date", Query.Direction.DESCENDING).get().addOnSuccessListener { documents ->
                 posts = documents.toMutableList()
                 deleteBtn?.visibility = Button.VISIBLE
                 showNewPost()
@@ -139,7 +140,7 @@ class watchPosts : AppCompatActivity() {
 
         lastSlide = false
 
-        val postIndex = Random.nextInt(posts!!.size)
+        val postIndex = 0
         val post = posts?.get(postIndex)
         val username = post?.data?.get("user")
         val imageUrl = post?.data?.get("image")

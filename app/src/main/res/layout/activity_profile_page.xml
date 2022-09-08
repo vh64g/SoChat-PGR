@@ -153,6 +153,7 @@
         tools:ignore="HardcodedText,UsingOnClickInXml" />
 
     <LinearLayout
+        android:id="@+id/linearLayout3"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -165,9 +166,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:onClick="onCancelEdtProfileBtnClick"
             android:text="Cancel"
             android:visibility="gone"
-            android:onClick="onCancelEdtProfileBtnClick"
             tools:ignore="HardcodedText,UsingOnClickInXml" />
 
         <Button
@@ -175,10 +176,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:onClick="onSaveEdtProfileBtnClick"
             android:text="Save"
             android:visibility="gone"
-            android:onClick="onSaveEdtProfileBtnClick"
             tools:ignore="HardcodedText,UsingOnClickInXml" />
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
