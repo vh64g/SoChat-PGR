@@ -9,6 +9,7 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.auth.ktx.userProfileChangeRequest
 import com.google.firebase.firestore.ktx.firestore
@@ -47,6 +48,15 @@ class signup : AppCompatActivity() {
                 auth.signOut()
                 Toast.makeText(this, "Please verify your email", Toast.LENGTH_LONG).show()
             }
+        }else{
+            val eMailExtra = intent.getStringExtra("email")
+            val passwordExtra = intent.getStringExtra("password")
+            if(eMailExtra != null && passwordExtra != null){
+                val email = findViewById<EditText>(R.id.edtTextEmail)
+                val password = findViewById<EditText>(R.id.edtTextPassword)
+                email.setText(eMailExtra)
+                password.setText(passwordExtra)
+            }
         }
     }
 
@@ -83,28 +93,35 @@ class signup : AppCompatActivity() {
             confirmPassword.error = "Password must be at least 6 characters"
         } else {
             auth.createUserWithEmailAndPassword(emailText, passwordText)
-                .addOnCompleteListener(this) { task ->
-                    if (task.isSuccessful) {
-                        // Sign in success, update UI with the signed-in user's information
-                        Log.d(TAG, "createUserWithEmail:success")
-                        val user = auth.currentUser
-                        val newuser = hashMapOf(
-                            "username" to usernameText,
-                            "email" to emailText,
-                            "uid" to user?.uid,
-                            "posts" to listOf<Any>()
-                        )
-                        db.collection("users").add(newuser)
-                        val profileUpdates = userProfileChangeRequest { displayName = usernameText }
-                        user?.updateProfile(profileUpdates)
-                        user?.sendEmailVerification()?.addOnCompleteListener { task -> if (task.isSuccessful) { Toast.makeText(baseContext, "Verification email sent to ${user.email}", Toast.LENGTH_SHORT).show() } }
-                        val intent: Intent = Intent(applicationContext, MainActivity::class.java)
-                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                        startActivity(intent)
-                    } else {
-                        // If sign in fails, display a message to the user.
-                        Log.w(TAG, "createUserWithEmail:failure", task.exception)
-                        Toast.makeText(baseContext, "Authentication failed.", Toast.LENGTH_SHORT).show()
+                .addOnSuccessListener {
+                    // Sign in success, update UI with the signed-in user's information
+                    val user = auth.currentUser
+                    val newUser = hashMapOf(
+                        "username" to usernameText,
+                        "email" to emailText,
+                        "uid" to user?.uid,
+                        "posts" to listOf<Any>()
+                    )
+                    db.collection("users").add(newUser)
+                    val profileUpdates = userProfileChangeRequest { displayName = usernameText }
+                    user?.updateProfile(profileUpdates)
+                    user?.sendEmailVerification()?.addOnCompleteListener { task -> if (task.isSuccessful) { Toast.makeText(baseContext, "Verification email sent to ${user.email}", Toast.LENGTH_SHORT).show() } }
+                    val intent: Intent = Intent(applicationContext, MainActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
+                }
+                .addOnFailureListener { e ->
+                    when ((e as FirebaseAuthException).errorCode) {
+                        "ERROR_INVALID_EMAIL" -> Toast.makeText(this, "Invalid email", Toast.LENGTH_LONG).show()
+                        "ERROR_WEAK_PASSWORD" -> Toast.makeText(this, "Password is too weak", Toast.LENGTH_LONG).show()
+                        "ERROR_EMAIL_ALREADY_IN_USE" -> {
+                            Toast.makeText(this, "Email already in use", Toast.LENGTH_LONG).show()
+                            intent = Intent(applicationContext, login::class.java)
+                            intent.putExtra("email", emailText)
+                            intent.putExtra("password", passwordText)
+                            startActivity(intent)
+                        }
+                        "ERROR_OPERATION_NOT_ALLOWED" -> Toast.makeText(this, "Operation not allowed, user disabled?", Toast.LENGTH_LONG).show()
                     }
                 }
         }

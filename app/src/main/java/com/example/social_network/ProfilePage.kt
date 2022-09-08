@@ -2,7 +2,6 @@ package com.example.social_network
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
@@ -122,7 +121,8 @@ class ProfilePage : AppCompatActivity() {
                                     updateViews(false)
                                     auth.signOut()
                                     intent = Intent(this, login::class.java)
-                                    startActivity(intent) }
+                                    startActivity(intent)
+                                    finish()}
                                 .addOnFailureListener { Toast.makeText(this, "Failed to send verification email", Toast.LENGTH_SHORT).show() } }
                         .addOnFailureListener { e ->
                             when ((e as FirebaseAuthException).errorCode) {
@@ -162,5 +162,12 @@ class ProfilePage : AppCompatActivity() {
             saveEdtBtn?.visibility = View.GONE
             pwInfoLayout?.visibility = View.GONE
         }
+    }
+
+    fun onLogoutBtnClick(view: View) {
+        auth.signOut()
+        intent = Intent(this, login::class.java)
+        startActivity(intent)
+        finish()
     }
 }

@@ -14,6 +14,7 @@ import com.google.android.gms.ads.AdLoader
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.MobileAds
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -109,6 +110,15 @@ class login : AppCompatActivity() {
                 auth.signOut()
                 Toast.makeText(this, "Please verify your email", Toast.LENGTH_LONG).show()
             }
+        } else {
+            val eMailExtra = intent.getStringExtra("email")
+            val passwordExtra = intent.getStringExtra("password")
+            if(eMailExtra != null && passwordExtra != null){
+                val email: EditText = findViewById(R.id.edtTextEmail)
+                val password: EditText = findViewById(R.id.edtTextPassword)
+                email.setText(eMailExtra)
+                password.setText(passwordExtra)
+            }
         }
     }
 
@@ -132,29 +142,33 @@ class login : AppCompatActivity() {
         }
 
         auth.signInWithEmailAndPassword(emailText, passwordText)
-            .addOnCompleteListener(this) { task ->
-                if (task.isSuccessful) {
-                    // Sign in success
-                    val user = auth.currentUser
-                    if (user!!.isEmailVerified){
-                        Log.d(TAG, "signInWithEmail:success")
-                        val intent: Intent = Intent(applicationContext, MainActivity::class.java)
-                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                        startActivity(intent)
-                    } else {
-                        user.sendEmailVerification()
-                            .addOnSuccessListener { auth.signOut() }
-                            .addOnFailureListener { auth.signOut() }
-                        Toast.makeText(this, "Please verify your email", Toast.LENGTH_LONG).show()
-                    }
-                } else {
-                    // If sign in fails, display a message to the user.
-                    Log.w(TAG, "signInWithEmail:failure", task.exception)
-                    Toast.makeText(baseContext, "Authentication failed.",
-                        Toast.LENGTH_SHORT).show()
-                    val intent: Intent = Intent(applicationContext, signup::class.java)
+            .addOnSuccessListener {
+                // Sign in success
+                val user = auth.currentUser
+                if (user!!.isEmailVerified){
+                    Log.d(TAG, "signInWithEmail:success")
+                    val intent: Intent = Intent(applicationContext, MainActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     startActivity(intent)
+                } else {
+                    user.sendEmailVerification()
+                        .addOnSuccessListener { auth.signOut() }
+                        .addOnFailureListener { auth.signOut() }
+                    Toast.makeText(this, "Please verify your email", Toast.LENGTH_LONG).show()
+                }
+            }
+            .addOnFailureListener { e ->
+                when ((e as FirebaseAuthException).errorCode) {
+                    "ERROR_INVALID_EMAIL" -> Toast.makeText(this, "Invalid email", Toast.LENGTH_LONG).show()
+                    "ERROR_WRONG_PASSWORD" -> Toast.makeText(this, "Wrong Password", Toast.LENGTH_SHORT).show()
+                    "ERROR_USER_NOT_FOUND" -> {
+                        val intent = Intent(applicationContext, signup::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        intent.putExtra("email", emailText)
+                        intent.putExtra("password", passwordText)
+                        startActivity(intent)
+                    }
+                    "ERROR_USER_DISABLED" -> Toast.makeText(this, "User disabled", Toast.LENGTH_SHORT).show()
                 }
             }
     }
