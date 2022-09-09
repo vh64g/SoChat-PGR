@@ -27,7 +27,7 @@ class login : AppCompatActivity() {
 
     companion object {
         const val ADMOB_AD_UNIT_ID = "ca-app-pub-1839648225801792/8563792553"
-        const val BUILDNUMBER = 6
+        const val BUILDNUMBER = 7
         const val VersionNumber = 1
         const val TAG = "LogInActivity"
     }
