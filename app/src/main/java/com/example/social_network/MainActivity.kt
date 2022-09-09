@@ -197,6 +197,23 @@ class MainActivity : AppCompatActivity(){
             }
             override fun onSwipeDown() {
                 super.onSwipeDown()
+                var newestBuild: Int = 0
+                var newestVersion: Int = 0
+                db.collection("INFORMATION").document("BUILD").get()
+                    .addOnSuccessListener {document ->
+                        newestBuild = document.data?.get("nr").toString().toInt()
+                        db.collection("INFORMATION").document("VERSION").get()
+                            .addOnSuccessListener {document ->
+                                newestVersion = document.data?.get("nr").toString().toInt()
+                                if(newestBuild > login.BUILDNUMBER || newestVersion > login.VersionNumber){
+                                    Toast.makeText(this@MainActivity, "There is a new update available", Toast.LENGTH_LONG).show()
+                                    intent = Intent(applicationContext, UpdateRequired::class.java)
+                                    startActivity(intent)
+                                } else {
+                                    Toast.makeText(this@MainActivity, "You are up to date", Toast.LENGTH_LONG).show()
+                                }
+                            }
+                    }
             }
         })
     }
