@@ -43,7 +43,7 @@ class login : AppCompatActivity() {
     private fun checkForUpdates(){
         db.collection("INFORMATION").document("BUILD").get()
             .addOnSuccessListener { document ->
-                val newestBuild = document.data?.get("nr").toString().toInt()
+                val newestBuild = document.data?.get("nr").toString().toFloat()
                 val required = document.data?.get("required").toString().toBoolean()
                 if (newestBuild > BUILDNUMBER){
                     if (required){
@@ -52,7 +52,7 @@ class login : AppCompatActivity() {
                         startActivity(intent)
                         finish()
                     } else {
-                        if (newestBuild == BUILDNUMBER + 1){
+                        if (newestBuild == BUILDNUMBER + 1f){
                             Toast.makeText(this, "There is a new optional major update available", Toast.LENGTH_LONG).show()
                         } else {
                             Toast.makeText(this, "There are new major updates available, you will have to get the newest version of the app, to be able to use it", Toast.LENGTH_LONG).show()
@@ -65,10 +65,12 @@ class login : AppCompatActivity() {
             }
         db.collection("INFORMATION").document("VERSION").get()
             .addOnSuccessListener { document ->
-                val newestVersion = document.data?.get("nr").toString().toInt()
+                val newestVersion = document.data?.get("nr").toString().toFloat()
                 if (newestVersion > VersionNumber){
-                    if (newestVersion == VersionNumber + 1){
+                    if (newestVersion == VersionNumber + 1f){
                         Toast.makeText(this, "There is a new optional minor update available", Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(this, "There are new optional minor updates available", Toast.LENGTH_LONG).show()
                     }
                 }
             }
