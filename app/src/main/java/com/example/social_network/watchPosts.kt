@@ -39,6 +39,7 @@ class watchPosts : AppCompatActivity() {
 
     private var deleteBtn: Button? = null
 
+    private var postIndex: Int = 0
     private var currentPost: DocumentSnapshot? = null
 
     private var lastSlide: Boolean = false
@@ -104,14 +105,17 @@ class watchPosts : AppCompatActivity() {
             }
             override fun onSwipeRight() {
                 super.onSwipeRight()
+                finish()
             }
             override fun onSwipeUp() {
                 super.onSwipeUp()
+                postIndex++
                 showNewPost()
             }
             override fun onSwipeDown() {
                 super.onSwipeDown()
-                finish()
+                postIndex--
+                showNewPost()
             }
 
             override fun onDoubleClick() {
@@ -124,9 +128,10 @@ class watchPosts : AppCompatActivity() {
     @Suppress("UNCHECKED_CAST")
     private fun showNewPost(){
 
+        if(postIndex < 0){ finish()}
         if(lastSlide){finish()}
 
-        if(posts==null || posts!!.size<=0){
+        if(posts==null || posts!!.size<=0 || postIndex>=posts!!.size){
             val msg = "You're all caught up!"
             usernameTextView?.text = msg
             imageView?.setImageResource(R.drawable.logo_circle)
@@ -140,7 +145,6 @@ class watchPosts : AppCompatActivity() {
 
         lastSlide = false
 
-        val postIndex = 0
         val post = posts?.get(postIndex)
         val username = post?.data?.get("user")
         val imageUrl = post?.data?.get("image")
@@ -149,7 +153,6 @@ class watchPosts : AppCompatActivity() {
         val likedBy: MutableList<Any?> = post?.data?.get("likedBy") as MutableList<Any?>
 
         currentPost = post
-        posts?.removeAt(postIndex)
 
         var imageBmp: Bitmap? = null
 
