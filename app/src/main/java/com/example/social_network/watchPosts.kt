@@ -20,6 +20,8 @@ import kotlin.random.Random
 
 class watchPosts : AppCompatActivity() {
 
+    val ONE_MEGABYTE: Long = 1024 * 1024
+
     private lateinit var gestureDetectorLayout: RelativeLayout
 
     private lateinit var auth: FirebaseAuth
@@ -41,6 +43,9 @@ class watchPosts : AppCompatActivity() {
 
     private var postIndex: Int = 0
     private var currentPost: DocumentSnapshot? = null
+
+    var imageBmp: Bitmap? = null
+    var nextImageBmp: Bitmap? = null
 
     private var lastSlide: Boolean = false
 
@@ -153,17 +158,29 @@ class watchPosts : AppCompatActivity() {
         val likedBy: MutableList<Any?> = post?.data?.get("likedBy") as MutableList<Any?>
 
         currentPost = post
+        val nextPost = posts?.get(postIndex+1)
 
-        var imageBmp: Bitmap? = null
+        if(nextImageBmp != null){
+            imageBmp = nextImageBmp
+            imageView?.setImageBitmap(imageBmp)
+        } else {
+            val storageRef = storage.getReferenceFromUrl(imageUrl.toString())
+            storageRef.getBytes(ONE_MEGABYTE)
+                .addOnSuccessListener {
+                    imageBmp = BitmapFactory.decodeByteArray(it, 0, it.size)
+                    imageView?.setImageBitmap(imageBmp)
+                }
+                .addOnFailureListener {Toast.makeText(this, "Img download failed", Toast.LENGTH_SHORT).show()}
+        }
 
-        val storageRef = storage.getReferenceFromUrl(imageUrl.toString())
-        val ONE_MEGABYTE: Long = 1024 * 1024
-        storageRef.getBytes(ONE_MEGABYTE)
-            .addOnSuccessListener {
-                imageBmp = BitmapFactory.decodeByteArray(it, 0, it.size)
-                imageView?.setImageBitmap(imageBmp)
+        if(nextPost != null){
+            val nextImageUrl = nextPost.data?.get("image")
+            val storageRef = storage.reference
+            val imageRef = storageRef.child(nextImageUrl.toString())
+            imageRef.getBytes(ONE_MEGABYTE).addOnSuccessListener {
+                nextImageBmp = BitmapFactory.decodeByteArray(it, 0, it.size)
             }
-            .addOnFailureListener {Toast.makeText(this, "Img download failed", Toast.LENGTH_SHORT).show()}
+        }
 
         usernameTextView?.text = username.toString()
         postTextView?.text = postText.toString()
