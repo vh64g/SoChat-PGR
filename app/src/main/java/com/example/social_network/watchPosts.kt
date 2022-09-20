@@ -20,6 +20,11 @@ import kotlin.random.Random
 
 class watchPosts : AppCompatActivity() {
 
+    companion object{
+        const val ADMOB_AD_UNIT_ID = "ca-app-pub-1839648225801792/8563792553"
+        const val TAG = "LogInActivity"
+    }
+
     val ONE_MEGABYTE: Long = 1024 * 1024
 
     private lateinit var gestureDetectorLayout: RelativeLayout
@@ -67,6 +72,22 @@ class watchPosts : AppCompatActivity() {
         if (mode != null) {
             viewMode = mode
         }
+    }
+
+    private fun googleAdMob(){
+        MobileAds.initialize(this) {}
+        val adLoader = AdLoader.Builder(this, ADMOB_AD_UNIT_ID)
+            .forNativeAd { nativeAd ->
+                val background = ColorDrawable(-0x999a)
+                val styles: NativeTemplateStyle =
+                    com.google.android.ads.nativetemplates.NativeTemplateStyle.Builder()
+                        .withMainBackgroundColor(background).build()
+                val template: TemplateView = findViewById<TemplateView>(R.id.my_template)
+                template.setStyles(styles)
+                template.setNativeAd(nativeAd)
+            }
+            .build()
+        adLoader.loadAd(AdRequest.Builder().build())
     }
 
     private fun getPosts(){
