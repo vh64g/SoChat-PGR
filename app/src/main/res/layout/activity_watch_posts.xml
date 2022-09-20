@@ -25,6 +25,16 @@
             android:text="UserName"
             android:textAppearance="@style/TextAppearance.AppCompat.Display1" />
 
+        <com.google.android.ads.nativetemplates.TemplateView
+        android:id="@+id/my_template"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="invisible"
+        app:gnt_template_type="@layout/gnt_small_template_view"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
         <View
             android:id="@+id/divider2"
             android:layout_width="match_parent"
