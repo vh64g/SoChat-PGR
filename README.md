@@ -12,4 +12,4 @@ A social Media Platform for android
 
 #### Download Links:
 
-[Google Drive](https://drive.google.com/drive/folders/1Aebj-EWocUYJ-wigxr0NSX1smKnXiWTH?usp=sharing)
+[Google Drive](https://drive.google.com/file/d/1V_05T3jCiGFYEC02iSzHc-uYMnpbvBdh/view?usp=drivesdk)
