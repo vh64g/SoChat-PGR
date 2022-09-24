@@ -25,16 +25,6 @@
             android:text="UserName"
             android:textAppearance="@style/TextAppearance.AppCompat.Display1" />
 
-        <com.google.android.ads.nativetemplates.TemplateView
-        android:id="@+id/my_template"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="invisible"
-        app:gnt_template_type="@layout/gnt_small_template_view"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
         <View
             android:id="@+id/divider2"
             android:layout_width="match_parent"
@@ -116,5 +106,28 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         tools:ignore="HardcodedText,UsingOnClickInXml" />
+
+    <View
+        android:id="@+id/view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000000"
+        android:backgroundTint="#000000"
+        android:visibility="gone"/>
+
+    <com.google.android.ads.nativetemplates.TemplateView
+        android:id="@+id/my_template"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:visibility="gone"
+        app:gnt_template_type="@layout/gnt_medium_template_view"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias=".5">
+
+    </com.google.android.ads.nativetemplates.TemplateView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

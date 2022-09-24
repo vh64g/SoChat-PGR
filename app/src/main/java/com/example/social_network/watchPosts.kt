@@ -69,6 +69,7 @@ class watchPosts : AppCompatActivity() {
         findViews()
         gestureDetector()
         getPosts()
+        googleAdMob()
     }
 
     private fun getExtras(intent: Intent){
